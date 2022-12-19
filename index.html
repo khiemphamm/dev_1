@@ -1,0 +1,214 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+  <head>
+    <title>LINH</title>
+    <meta name="Generator" content="EditPlus" />
+    <meta name="Author" content="" />
+    <meta name="Keywords" content="" />
+    <meta name="Description" content="" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="box">
+      <canvas id="heart"></canvas>
+    </div>
+    <div class="wrapper">
+      <div class="heart x1"></div>
+      <div class="heart x2"></div>
+      <div class="heart x3"></div>
+      <div class="heart x4"></div>
+      <div class="heart x5"> </div>
+      <div class="heart x6"> </div>
+      <div class="heart x7"> </div>
+      <div class="heart x8"> </div>
+      <div class="heart x9"> </div>
+      <div class="heart x10"> </div>
+      <div class="heart x11"> </div>
+      <div class="heart x12"> </div>
+      <div class="heart x13"> </div>
+      <div class="heart x14"> </div>
+      <div class="heart x15"> </div>
+  </div>
+    <script src="scripts.js"></script>
+    <script>
+      (function (canvas) {
+        var context = canvas.getContext("2d"),
+          particles = new ParticlePool(settings.particles.length),
+          particleRate =
+            settings.particles.length / settings.particles.duration,
+          time;
+        function pointOnHeart(t) {
+          return new Point(
+            160 * Math.pow(Math.sin(t), 3),
+            130 * Math.cos(t) -
+              50 * Math.cos(2 * t) -
+              20 * Math.cos(3 * t) -
+              10 * Math.cos(4 * t) +
+              25
+          );
+        }
+        var image = (function () {
+          var canvas = document.createElement("canvas"),
+            context = canvas.getContext("2d");
+          canvas.width = settings.particles.size;
+          canvas.height = settings.particles.size;
+          function to(t) {
+            var point = pointOnHeart(t);
+            point.x =
+              settings.particles.size / 2 +
+              (point.x * settings.particles.size) / 350;
+            point.y =
+              settings.particles.size / 2 -
+              (point.y * settings.particles.size) / 350;
+            return point;
+          }
+          context.beginPath();
+          var t = -Math.PI;
+          var point = to(t);
+          context.moveTo(point.x, point.y);
+          while (t < Math.PI) {
+            t += 0.01;
+            point = to(t);
+            context.lineTo(point.x, point.y);
+          }
+          context.closePath();
+          context.fillStyle = "pink";
+          context.fill();
+          var image = new Image();
+          image.src = canvas.toDataURL();
+          return image;
+        })();
+        function render() {
+          requestAnimationFrame(render);
+          var newTime = new Date().getTime() / 1000,
+            deltaTime = newTime - (time || newTime);
+          time = newTime;
+          context.clearRect(0, 0, canvas.width, canvas.height);
+          var amount = particleRate * deltaTime;
+          for (var i = 0; i < amount; i++) {
+            var pos = pointOnHeart(Math.PI - 2 * Math.PI * Math.random());
+            var dir = pos.clone().length(settings.particles.velocity);
+            particles.add(
+              canvas.width / 2 + pos.x,
+              canvas.height / 2 - pos.y,
+              dir.x,
+              -dir.y
+            );
+          }
+          particles.update(deltaTime);
+          particles.draw(context, image);
+        }
+        function reszie() {
+          canvas.width = canvas.clientWidth;
+          canvas.height = canvas.clientHeight;
+        }
+        window.reszie = reszie;
+        setTimeout(function () {
+          reszie();
+          render();
+        }, 10);
+      })(document.getElementById("heart"));
+      var brd = document.createElement("DIV");
+      document.body.insertBefore(brd, document.getElementById("board"));
+
+      const duration = 3000;
+      const speed = 0.5;
+      const cursorXOffset = 0;
+      const cursorYOffset = -5;
+
+      var hearts = [];
+
+      function generateHeart(x, y, xBound, xStart, scale) {
+        var heart = document.createElement("DIV");
+        heart.setAttribute("class", "heart");
+        brd.appendChild(heart);
+        heart.time = duration;
+        heart.x = x;
+        heart.y = y;
+        heart.bound = xBound;
+        heart.direction = xStart;
+        heart.style.left = heart.x + "px";
+        heart.style.top = heart.y + "px";
+        heart.scale = scale;
+        heart.style.transform = "scale(" + scale + "," + scale + ")";
+        if (hearts == null) hearts = [];
+        hearts.push(heart);
+        return heart;
+      }
+
+      var down = false;
+      var event = null;
+
+      document.onmousedown = function (e) {
+        down = true;
+        event = e;
+      };
+
+      document.onmouseup = function (e) {
+        down = false;
+      };
+
+      document.onmousemove = function (e) {
+        down = true;
+        event = e;
+      };
+
+      document.ontouchstart = function (e) {
+        down = true;
+        event = e.touches[0];
+      };
+
+      document.ontouchend = function (e) {
+        down = false;
+      };
+
+      document.ontouchmove = function (e) {
+        event = e.touches[0];
+      };
+
+      var before = Date.now();
+      var id = setInterval(frame, 5);
+      var gr = setInterval(check, 100);
+
+      function frame() {
+        var current = Date.now();
+        var deltaTime = current - before;
+        before = current;
+        for (i in hearts) {
+          var heart = hearts[i];
+          heart.time -= deltaTime;
+          if (heart.time > 0) {
+            heart.y -= speed;
+            heart.style.top = heart.y + "px";
+            heart.style.left =
+              heart.x +
+              ((heart.direction *
+                heart.bound *
+                Math.sin((heart.y * heart.scale) / 30)) /
+                heart.y) *
+                100 +
+              "px";
+          } else {
+            heart.parentNode.removeChild(heart);
+            hearts.splice(i, 1);
+          }
+        }
+      }
+
+      function check() {
+        if (down) {
+          var start = 1 - Math.round(Math.random()) * 2;
+          var scale = Math.random() * Math.random() * 0.8 + 0.2;
+          var bound = 30 + Math.random() * 20;
+          generateHeart(
+            event.pageX - brd.offsetLeft + cursorXOffset,
+            event.pageY - brd.offsetTop + cursorYOffset,
+            bound,
+            start,
+            scale
+          );
+        }
+      }
+    </script>
+  </body>
+</html>
